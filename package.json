@@ -1,0 +1,25 @@
+{
+  "name": "mom-balance-reconciliation-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for tracking balance reconciliation with mom",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "clear-transactions": "node scripts/clear-transactions.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "balance",
+    "reconciliation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "better-sqlite3": "^11.7.0",
+    "dotenv": "^16.4.7"
+  }
+}
