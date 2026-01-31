@@ -4,6 +4,7 @@ import { handleBalance } from './commands/balance.js';
 import { handleToday, handleHistory } from './commands/history.js';
 import { handleTransaction } from './commands/transaction.js';
 import { handleUndo } from './commands/undo.js';
+import monitor from '../monitor-bridge-batch.mjs';
 
 /**
  * Initialize and start the Telegram bot
@@ -18,6 +19,9 @@ export function startBot(token) {
             params: { timeout: 55 }
         }
     });
+
+    // [MONITORING] Track inbound messages for Dashboard
+    bot.on('message', () => monitor.recordInbound());
 
     console.log('🤖 Bot started successfully!');
     console.log('⏱️ Mode: Wake-and-Sleep (Running for 6 minutes, 30s polling)');
