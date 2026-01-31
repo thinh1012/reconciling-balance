@@ -28,7 +28,7 @@ try {
 try {
     startBot(BOT_TOKEN);
 
-    monitor.init('mom_bot');
+    monitor.init('mom_bot', '/root/server-monitor/monitor.db');
 } catch (error) {
     console.error('❌ Bot startup failed:', error);
     closeDatabase();
