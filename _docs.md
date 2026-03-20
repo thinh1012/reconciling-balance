@@ -125,13 +125,3 @@ pm2 save
 - [ ] Daily balance summary notification
 - [ ] Alert when balance crosses a threshold
 
----
-
-## Notes for Claude
-> Paste this section at the start of every Claude session for best results
-
-- Stack: Node.js (ES Modules), node-telegram-bot-api, better-sqlite3, dotenv
-- Hosting: Ubuntu VPS at `/root/reconciling-balance`, managed by PM2
-- PM2 cycle: 6 min active → 9 min sleep (restart-delay 540000ms)
-- Monitor bridge: `monitor-bridge-batch.mjs` logs traffic → `/root/server-monitor/collect-logs.sh` cron (every minute) → dashboard at port 8080
-- Do NOT change: `monitor-bridge-batch.mjs`, `data/` directory, `.env`
