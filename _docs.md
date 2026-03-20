@@ -89,8 +89,9 @@ pm2 save
 ---
 
 ## PM2 Behaviour ⚠️
-> PM2 **always restarts** the bot when it stops — even after the built-in 6-minute Wake-and-Sleep shutdown.
-> The `--restart-delay 540000` creates a **15-minute cycle**: 6 min ON → 9 min OFF.
+> Each bot manages its own wake/sleep cycle independently via `--restart-delay`.
+> The bot runs for **6 minutes**, shuts itself down, then PM2 waits **9 minutes** before restarting → 15-min cycle.
+> On Proxmox/container restart: `pm2 startup` (systemd `pm2-root`) auto-restores all saved processes — no custom scheduler needed.
 > To permanently stop: `pm2 stop mom-bot`
 
 ---
