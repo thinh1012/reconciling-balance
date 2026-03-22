@@ -1,4 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
+import fs from 'fs';
 import { handleHelp } from './commands/help.js';
 import { handleBalance } from './commands/balance.js';
 import { handleToday, handleHistory } from './commands/history.js';
@@ -6,45 +7,36 @@ import { handleTransaction } from './commands/transaction.js';
 import { handleUndo } from './commands/undo.js';
 import monitor from '../monitor-bridge-batch.mjs';
 
-/**
- * Initialize and start the Telegram bot
- */
-export function startBot(token) {
-    // [NETWORK]: 30s polling during active window
-    // The bot will only run for 6 minutes every 30 minutes to save resources.
+export async function startBot(token) {
+    const port = parseInt(process.env.PORT || '2002');
+    const webhookBase = process.env.WEBHOOK_BASE_URL;
+    const secret = process.env.WEBHOOK_SECRET;
+
     const bot = new TelegramBot(token, {
-        polling: {
-            interval: 30000,    // 30 seconds (User requested)
-            autoStart: true,
-            params: { timeout: 55 }
+        webHook: {
+            port,
+            host: '127.0.0.1',
+            ...(secret && { secretToken: secret })
         }
     });
 
-    // [MONITORING] Track inbound messages for Dashboard
-    bot.on('message', () => monitor.recordInbound());
-
-    console.log('🤖 Bot started successfully!');
-    console.log('⏱️ Mode: Wake-and-Sleep (Running for 6 minutes, 30s polling)');
-
-    // Schedule shutdown after 6 minutes (360,000 ms)
-    const RUN_DURATION = 360000;
-    setTimeout(() => {
-        console.log('💤 6 minutes up! Shutting down to save router load. See you later.');
-        bot.stopPolling();
-        setTimeout(() => process.exit(0), 1000); // Graceful exit
-    }, RUN_DURATION);
-
-    // Diagnostic Heartbeat
-    bot.onText(/\/ping/, (msg) => {
-        bot.sendMessage(msg.chat.id, `🏓 PONG!\n\nStatus: Online\nTime: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}`);
+    const webhookUrl = `${webhookBase}/webhook/${token}`;
+    await bot.setWebHook(webhookUrl, {
+        certificate: fs.createReadStream('/etc/nginx/ssl/na-bot/cert.pem'),
+        ...(secret && { secret_token: secret })
     });
 
+    console.log(`Webhook registered: ${webhookBase}/webhook/<token>`);
+    console.log('Mode: Webhook (always-on)');
+
+    bot.on('message', () => monitor.recordInbound());
+
     bot.onText(/\/start/, (msg) => {
-        const chatId = msg.chat.id;
-        bot.sendMessage(
-            chatId,
-            '👋 Chào mừng đến với Bot Quản Lý Tiền Mẹ!\n\nGõ /help để xem hướng dẫn.'
-        );
+        bot.sendMessage(msg.chat.id, '👋 Chào mừng đến với Bot Quản Lý Tiền Mẹ!\n\nGõ /help để xem hướng dẫn.');
+    });
+
+    bot.onText(/\/ping/, (msg) => {
+        bot.sendMessage(msg.chat.id, `🏓 PONG!\n\nStatus: Online\nTime: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}`);
     });
 
     bot.onText(/\/help/, (msg) => handleHelp(bot, msg));
@@ -53,34 +45,23 @@ export function startBot(token) {
     bot.onText(/\/undo/, (msg) => handleUndo(bot, msg));
 
     bot.onText(/\/history(.*)/, (msg, match) => {
-        const args = match[1].trim();
-        handleHistory(bot, msg, args);
+        handleHistory(bot, msg, match[1].trim());
     });
 
     bot.on('message', (msg) => {
         const text = msg.text;
         if (!text || text.startsWith('/')) return;
-
         if (/^[+\-][\d.]+[km]?/i.test(text.trim())) {
             handleTransaction(bot, msg);
         }
     });
 
-    // Error handling for EFATAL and ETIMEDOUT
-    bot.on('polling_error', (error) => {
-        console.error(`⚠️ [NETWORK_ISSUE]: ${error.code} - ${error.message}`);
-
-        if (error.code === 'ETIMEDOUT') {
-            console.log('⏳ Telegram connection timed out. Retrying...');
-        }
-
-        if (error.code === 'EFATAL' || error.code === 'ECONNRESET') {
-            console.error(`💀 NETWORK ERROR (${error.code}). Bot will stay alive and retry until the 6-minute window ends.`);
-        }
+    bot.on('webhook_error', (error) => {
+        console.error(`Webhook error: ${error.message}`);
     });
 
     process.on('SIGINT', () => {
-        bot.stopPolling();
+        bot.closeWebHook();
         process.exit(0);
     });
 

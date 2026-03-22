@@ -67,6 +67,9 @@ reconciling-balance/
 ```
 TELEGRAM_BOT_TOKEN=    # From BotFather
 DATABASE_PATH=./data/balance.db
+PORT=2002
+WEBHOOK_BASE_URL=https://thinhle1234.ddns.net:8443/mom
+WEBHOOK_SECRET=...
 ```
 
 ---
@@ -80,17 +83,15 @@ npm install
 # Run directly
 npm start
 
-# Run as PM2 service (Ubuntu) — 15-min cycle
+# Run as PM2 service (Ubuntu) — always-on webhook mode
 pm2 start index.js --name "mom-bot"
-pm2 restart mom-bot --restart-delay 540000   # 9 min sleep after 6 min run
 pm2 save
 ```
 
 ---
 
 ## PM2 Behaviour ⚠️
-> Each bot manages its own wake/sleep cycle independently via `--restart-delay`.
-> The bot runs for **6 minutes**, shuts itself down, then PM2 waits **9 minutes** before restarting → 15-min cycle.
+> Bot runs in **webhook mode** (always-on). No sleep cycle.
 > On Proxmox/container restart: `pm2 startup` (systemd `pm2-root`) auto-restores all saved processes — no custom scheduler needed.
 > To permanently stop: `pm2 stop mom-bot`
 
