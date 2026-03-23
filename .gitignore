@@ -17,3 +17,8 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Internal docs & bridge scripts
+_docs.md
+monitor-bridge-batch.js
+monitor-bridge-batch.mjs
