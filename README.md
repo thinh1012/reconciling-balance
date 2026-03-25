@@ -71,4 +71,4 @@ Just type the amount directly — no command needed:
 
 ## Self-hosting notes
 
-Runs behind nginx (port 8443) with a self-signed cert for Telegram webhook compatibility. PM2 restores the process on reboot.
+Runs behind nginx with a self-signed cert for Telegram webhook compatibility. PM2 restores the process on reboot.
